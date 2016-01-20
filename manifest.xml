@@ -1,0 +1,14 @@
+<package>
+  <description brief="vicon_udp">
+
+     vicon_udp
+
+  </description>
+  <author>User Account</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/vicon_udp</url>
+
+</package>
+
+
