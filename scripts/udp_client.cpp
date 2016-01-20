@@ -18,6 +18,8 @@
 #include <vector>
 #include <string.h>
 
+#include "ros/ros.h"
+
 #ifdef WIN32
   #include <conio.h>   // For _kbhit()
   #include <cstdio>   // For getchar()
@@ -171,10 +173,8 @@ int main( int argc, char* argv[] )
   // Program options
   
   std::string HostName = "192.168.10.81";
-  if( argc > 1 )
-  {
-    HostName = argv[1];
-  }
+
+
 
   // log contains:
   // version number
@@ -188,67 +188,6 @@ int main( int argc, char* argv[] )
   bool EnableHapticTest = false;
   bool bReadCentroids = false;
   std::vector<std::string> HapticOnList(0);
-  for(int a=2; a < argc; ++a)
-  {
-    std::string arg = argv[a];
-    if(arg == "--help")
-    {
-      std::cout << argv[0] << " <HostName>: allowed options include:\n  --log_file <LogFile> --enable_multicast <MulticastAddress:Port> --connect_to_multicast <MulticastAddress:Port> --help --enable_haptic_test <DeviceName> --centroids" << std::endl;
-      return 0;
-    }
-    else if (arg=="--log_file")
-    {
-      if(a < argc)
-      {
-        LogFile = argv[a+1];
-        std::cout << "Using log file <"<< LogFile << "> ..." << std::endl;
-        ++a;
-      }
-    }
-    else if (arg=="--enable_multicast")
-    {
-      EnableMultiCast = true;
-      if(a < argc)
-      {
-        MulticastAddress = argv[a+1];
-        std::cout << "Enabling multicast address <"<< MulticastAddress << "> ..." << std::endl;
-        ++a;
-      }
-    }
-    else if (arg=="--connect_to_multicast")
-    {
-      ConnectToMultiCast = true;
-      if(a < argc)
-      {
-        MulticastAddress = argv[a+1];
-        std::cout << "connecting to multicast address <"<< MulticastAddress << "> ..." << std::endl;
-        ++a;
-      }
-    }
-    else if (arg=="--enable_haptic_test")
-    {
-      EnableHapticTest = true;
-      ++a;
-      if ( a < argc )
-      {    
-        //assuming no haptic device name starts with "--"
-        while( a < argc && strncmp( argv[a], "--", 2 ) !=0  )
-        {
-          HapticOnList.push_back( argv[a] );
-          ++a;
-        }
-      }
-    }
-    else if( arg=="--centroids" )
-    {
-      bReadCentroids = true;
-    }
-    else
-    {
-      std::cout << "Failed to understand argument <" << argv[a] << ">...exiting" << std::endl;
-      return 1;
-    }
-  }
 
   std::ofstream ofs;
   if(!LogFile.empty())
