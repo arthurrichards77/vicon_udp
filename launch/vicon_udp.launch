@@ -1,0 +1,10 @@
+<launch>
+
+  <node name="vicon_client" pkg="vicon_udp" type="udp_client">
+  </node>
+
+  <node name="vicon_enable" pkg="vicon_udp" type="udp_enable">
+  </node>
+
+</launch>
+  
