@@ -170,8 +170,11 @@ int main( int argc, char* argv[] )
 
   // initialize the transform
   geometry_msgs::TransformStamped MyTransform;
-
   MyTransform.header.frame_id = ViconBaseFrame;
+
+  // initialize transform broadcaster
+  tf::TransformBroadcaster TfBroadcaster;
+  tf::Transform MyTfTransform;
 
   // log contains:
   // version number
@@ -373,6 +376,17 @@ int main( int argc, char* argv[] )
 
         // publish the thing
         pose_pub.publish(MyTransform);
+
+        // and the TF broadcast
+        MyTfTransform.setOrigin( tf::Vector3(_Output_GetSegmentGlobalTranslation.Translation[ 0 ] / 1.0e3,
+                                             _Output_GetSegmentGlobalTranslation.Translation[ 1 ] / 1.0e3,
+                                             _Output_GetSegmentGlobalTranslation.Translation[ 2 ] / 1.0e3) );
+        MyTfTransform.setRotation( tf::Quaternion(_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ],
+						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ],
+						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ],
+						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]) );
+        TfBroadcaster.sendTransform(tf::StampedTransform(MyTfTransform, ros::Time::now(), ViconBaseFrame, TopicName));
+
       }
 
     }
