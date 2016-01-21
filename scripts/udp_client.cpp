@@ -20,13 +20,7 @@
 
 #include "ros/ros.h"
 
-#ifdef WIN32
-  #include <conio.h>   // For _kbhit()
-  #include <cstdio>   // For getchar()
-  #include <windows.h> // For Sleep()
-#else
-  #include <unistd.h> // For sleep()
-#endif // WIN32
+#include <unistd.h> // For sleep()
 
 #include <time.h>
 
@@ -154,18 +148,7 @@ namespace
         return "Unknown";
     }
   }
-#ifdef WIN32
-  bool Hit()
-  {
-    bool hit = false;
-    while( _kbhit() )
-    {
-      getchar();
-      hit = true;
-    }
-    return hit;
-  }
-#endif
+
 }
 
 int main( int argc, char* argv[] )
@@ -173,8 +156,7 @@ int main( int argc, char* argv[] )
   // Program options
   
   std::string HostName = "192.168.10.81";
-
-
+  std::string TargetSubjectName = "QAV_GREEN";
 
   // log contains:
   // version number
@@ -228,11 +210,7 @@ int main( int argc, char* argv[] )
 
 
       std::cout << ".";
-  #ifdef WIN32
-      Sleep( 1000 );
-  #else
       sleep(1);
-  #endif
     }
     std::cout << std::endl;
 
@@ -286,11 +264,7 @@ int main( int argc, char* argv[] )
     size_t Counter = 0;
     clock_t LastTime = clock();
     // Loop until a key is pressed
-  #ifdef WIN32
-    while( !Hit() )
-  #else
     while( true)
-  #endif
     {
       // Get a frame
       output_stream << "Waiting for new frame...";
@@ -328,36 +302,9 @@ int main( int argc, char* argv[] )
       Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
       output_stream << "Frame Number: " << _Output_GetFrameNumber.FrameNumber << std::endl;
 
-      if( EnableHapticTest == true )
-      {
-        for (size_t i = 0; i < HapticOnList.size(); ++ i)
-        {
-          if( Counter % 2 == 0 )
-          {
-              Output_SetApexDeviceFeedback Output= MyClient.SetApexDeviceFeedback( HapticOnList[i],  true ); 
-              if( Output.Result == Result::Success )
-              {
-                output_stream<< "Turn haptic feedback on for device: " << HapticOnList[i]<<std::endl;
-              }
-              else if( Output.Result == Result::InvalidDeviceName )
-              {
-                output_stream<< "Device doesn't exist: "<< HapticOnList[i]<<std::endl;
-              }
-          }
-          if( Counter % 20 == 0 )
-          {
-              Output_SetApexDeviceFeedback Output = MyClient.SetApexDeviceFeedback( HapticOnList[i],  false); 
-
-              if( Output.Result == Result::Success )
-              {
-                output_stream<< "Turn haptic feedback off for device: " << HapticOnList[i]<<std::endl;
-              }
-          }
-        }
-      }
-
       Output_GetFrameRate Rate = MyClient.GetFrameRate();
       std::cout << "Frame rate: "           << Rate.FrameRateHz          << std::endl;
+
       // Get the timecode
       Output_GetTimecode _Output_GetTimecode  = MyClient.GetTimecode();
 
@@ -371,18 +318,6 @@ int main( int argc, char* argv[] )
                 << _Output_GetTimecode.Standard            << " " 
                 << _Output_GetTimecode.SubFramesPerFrame   << " " 
                 << _Output_GetTimecode.UserBits            << std::endl << std::endl;
-
-      // Get the latency
-      output_stream << "Latency: " << MyClient.GetLatencyTotal().Total << "s" << std::endl;
-      
-      for( unsigned int LatencySampleIndex = 0 ; LatencySampleIndex < MyClient.GetLatencySampleCount().Count ; ++LatencySampleIndex )
-      {
-        std::string SampleName  = MyClient.GetLatencySampleName( LatencySampleIndex ).Name;
-        double      SampleValue = MyClient.GetLatencySampleValue( SampleName ).Value;
-
-        output_stream << "  " << SampleName << " " << SampleValue << "s" << std::endl;
-      }
-      output_stream << std::endl;
 
       // Count the number of subjects
       unsigned int SubjectCount = MyClient.GetSubjectCount().SubjectCount;
@@ -583,167 +518,12 @@ int main( int argc, char* argv[] )
                                         << Adapt( _Output_GetMarkerGlobalTranslation.Occluded ) << std::endl;
         }
       }
-
-      // Get the unlabeled markers
-      unsigned int UnlabeledMarkerCount = MyClient.GetUnlabeledMarkerCount().MarkerCount;
-      output_stream << "    Unlabeled Markers (" << UnlabeledMarkerCount << "):" << std::endl;
-      for( unsigned int UnlabeledMarkerIndex = 0 ; UnlabeledMarkerIndex < UnlabeledMarkerCount ; ++UnlabeledMarkerIndex )
-      { 
-        // Get the global marker translation
-        Output_GetUnlabeledMarkerGlobalTranslation _Output_GetUnlabeledMarkerGlobalTranslation =
-          MyClient.GetUnlabeledMarkerGlobalTranslation( UnlabeledMarkerIndex );
-
-        output_stream << "      Marker #" << UnlabeledMarkerIndex   << ": ("
-                                      << _Output_GetUnlabeledMarkerGlobalTranslation.Translation[ 0 ] << ", "
-                                      << _Output_GetUnlabeledMarkerGlobalTranslation.Translation[ 1 ] << ", "
-                                      << _Output_GetUnlabeledMarkerGlobalTranslation.Translation[ 2 ] << ")" << std::endl;
-      }
-
-      // Count the number of devices
-      unsigned int DeviceCount = MyClient.GetDeviceCount().DeviceCount;
-      output_stream << "  Devices (" << DeviceCount << "):" << std::endl;
-      for( unsigned int DeviceIndex = 0 ; DeviceIndex < DeviceCount ; ++DeviceIndex )
-      {
-        output_stream << "    Device #" << DeviceIndex << ":" << std::endl;
-
-        // Get the device name and type
-        Output_GetDeviceName _Output_GetDeviceName = MyClient.GetDeviceName( DeviceIndex );
-        output_stream << "      Name: " << _Output_GetDeviceName.DeviceName << std::endl;
-        output_stream << "      Type: " << Adapt( _Output_GetDeviceName.DeviceType ) << std::endl;
-
-        // Count the number of device outputs
-        unsigned int DeviceOutputCount = MyClient.GetDeviceOutputCount( _Output_GetDeviceName.DeviceName ).DeviceOutputCount;
-        output_stream << "      Device Outputs (" << DeviceOutputCount << "):" << std::endl;
-        for( unsigned int DeviceOutputIndex = 0 ; DeviceOutputIndex < DeviceOutputCount ; ++DeviceOutputIndex )
-        {
-          // Get the device output name and unit
-          Output_GetDeviceOutputName _Output_GetDeviceOutputName = 
-            MyClient.GetDeviceOutputName( _Output_GetDeviceName.DeviceName, DeviceOutputIndex );
-
-          unsigned int DeviceOutputSubsamples = 
-                         MyClient.GetDeviceOutputSubsamples( _Output_GetDeviceName.DeviceName, 
-                                                             _Output_GetDeviceOutputName.DeviceOutputName ).DeviceOutputSubsamples;
-
-          output_stream << "      Device Output #" << DeviceOutputIndex << ":" << std::endl;
-          output_stream << "      Samples (" << DeviceOutputSubsamples << "):" << std::endl;
-
-          for( unsigned int DeviceOutputSubsample = 0; DeviceOutputSubsample < DeviceOutputSubsamples; ++DeviceOutputSubsample )
-          {
-            output_stream << "        Sample #" << DeviceOutputSubsample << ":" << std::endl;
-
-            // Get the device output value
-            Output_GetDeviceOutputValue _Output_GetDeviceOutputValue = 
-              MyClient.GetDeviceOutputValue( _Output_GetDeviceName.DeviceName, 
-                                             _Output_GetDeviceOutputName.DeviceOutputName, 
-                                             DeviceOutputSubsample );
-
-            output_stream << "          '" << _Output_GetDeviceOutputName.DeviceOutputName          << "' "
-                                           << _Output_GetDeviceOutputValue.Value                    << " " 
-                                           << Adapt( _Output_GetDeviceOutputName.DeviceOutputUnit ) << " " 
-                                           << Adapt( _Output_GetDeviceOutputValue.Occluded )        << std::endl;
-          }
-        }
-      }
-
-      // Output the force plate information.
-      unsigned int ForcePlateCount = MyClient.GetForcePlateCount().ForcePlateCount;
-      output_stream << "  Force Plates: (" << ForcePlateCount << ")" << std::endl;
-
-      for( unsigned int ForcePlateIndex = 0 ; ForcePlateIndex < ForcePlateCount ; ++ForcePlateIndex )
-      {
-        output_stream << "    Force Plate #" << ForcePlateIndex << ":" << std::endl;
-
-        unsigned int ForcePlateSubsamples = MyClient.GetForcePlateSubsamples( ForcePlateIndex ).ForcePlateSubsamples;
-
-		    output_stream << "    Samples (" << ForcePlateSubsamples << "):" << std::endl;
-
-        for( unsigned int ForcePlateSubsample = 0; ForcePlateSubsample < ForcePlateSubsamples; ++ForcePlateSubsample )
-        {
-          output_stream << "      Sample #" << ForcePlateSubsample << ":" << std::endl;
-
-          Output_GetGlobalForceVector _Output_GetForceVector = MyClient.GetGlobalForceVector( ForcePlateIndex, ForcePlateSubsample );
-          output_stream << "        Force (" << _Output_GetForceVector.ForceVector[ 0 ] << ", ";
-          output_stream << _Output_GetForceVector.ForceVector[ 1 ] << ", ";
-          output_stream << _Output_GetForceVector.ForceVector[ 2 ] << ")" << std::endl;
-
-          Output_GetGlobalMomentVector _Output_GetMomentVector = 
-                                         MyClient.GetGlobalMomentVector( ForcePlateIndex, ForcePlateSubsample );
-          output_stream << "        Moment (" << _Output_GetMomentVector.MomentVector[ 0 ] << ", ";
-          output_stream << _Output_GetMomentVector.MomentVector[ 1 ] << ", ";
-          output_stream << _Output_GetMomentVector.MomentVector[ 2 ] << ")" << std::endl;
-
-          Output_GetGlobalCentreOfPressure _Output_GetCentreOfPressure = 
-                                             MyClient.GetGlobalCentreOfPressure( ForcePlateIndex, ForcePlateSubsample );
-          output_stream << "        CoP (" << _Output_GetCentreOfPressure.CentreOfPressure[ 0 ] << ", ";
-          output_stream << _Output_GetCentreOfPressure.CentreOfPressure[ 1 ] << ", ";
-          output_stream << _Output_GetCentreOfPressure.CentreOfPressure[ 2 ] << ")" << std::endl;
-        }
-      }
-
-      // Output eye tracker information.
-      unsigned int EyeTrackerCount = MyClient.GetEyeTrackerCount().EyeTrackerCount;
-      output_stream << "  Eye Trackers: (" << EyeTrackerCount << ")" << std::endl;
-
-      for( unsigned int EyeTrackerIndex = 0 ; EyeTrackerIndex < EyeTrackerCount ; ++EyeTrackerIndex )
-      {
-        output_stream << "    Eye Tracker #" << EyeTrackerIndex << ":" << std::endl;
-
-        Output_GetEyeTrackerGlobalPosition _Output_GetEyeTrackerGlobalPosition = MyClient.GetEyeTrackerGlobalPosition( EyeTrackerIndex );
-
-        output_stream << "      Position (" << _Output_GetEyeTrackerGlobalPosition.Position[ 0 ] << ", ";
-        output_stream << _Output_GetEyeTrackerGlobalPosition.Position[ 1 ] << ", ";
-        output_stream << _Output_GetEyeTrackerGlobalPosition.Position[ 2 ] << ") ";
-        output_stream << Adapt( _Output_GetEyeTrackerGlobalPosition.Occluded ) << std::endl;
-
-        Output_GetEyeTrackerGlobalGazeVector _Output_GetEyeTrackerGlobalGazeVector = MyClient.GetEyeTrackerGlobalGazeVector( EyeTrackerIndex );
-
-        output_stream << "      Gaze (" << _Output_GetEyeTrackerGlobalGazeVector.GazeVector[ 0 ] << ", ";
-        output_stream << _Output_GetEyeTrackerGlobalGazeVector.GazeVector[ 1 ] << ", ";
-        output_stream << _Output_GetEyeTrackerGlobalGazeVector.GazeVector[ 2 ] << ") ";
-        output_stream << Adapt( _Output_GetEyeTrackerGlobalGazeVector.Occluded ) << std::endl;
-      }
-
-      if( bReadCentroids )
-      {
-        unsigned int CameraCount = MyClient.GetCameraCount().CameraCount;
-        output_stream << "Cameras(" << CameraCount << "):" << std::endl;
-
-        for( unsigned int CameraIndex = 0; CameraIndex < CameraCount; ++CameraIndex )
-        {
-          output_stream << "  Camera #" << CameraIndex << ":" << std::endl;
-        
-          const std::string CameraName = MyClient.GetCameraName( CameraIndex ).CameraName;
-          output_stream << "    Name: " << CameraName << std::endl;
-
-          unsigned int CentroidCount = MyClient.GetCentroidCount( CameraName ).CentroidCount;
-          output_stream << "    Centroids(" << CentroidCount << "):" << std::endl;
-
-          for( unsigned int CentroidIndex = 0; CentroidIndex < CentroidCount; ++CentroidIndex )
-          {
-            output_stream << "      Centroid #" << CentroidIndex << ":" << std::endl;
-
-            Output_GetCentroidPosition _Output_GetCentroidPosition = MyClient.GetCentroidPosition( CameraName, CentroidIndex );
-            output_stream << "        Position: (" << _Output_GetCentroidPosition.CentroidPosition[0] << ", "
-                                                   << _Output_GetCentroidPosition.CentroidPosition[1] << ")" << std::endl;
-            output_stream << "        Radius: ("    << _Output_GetCentroidPosition.Radius   << ")" << std::endl;
-            //output_stream << "        Accuracy: ("  << _Output_GetCentroidPosition.Accuracy << ")" << std::endl;
-          }
-        }
-      }
     }
 
-    if( EnableMultiCast )
-    {
-      MyClient.StopTransmittingMulticast();
-    }
     MyClient.DisableSegmentData();
     MyClient.DisableMarkerData();
     MyClient.DisableUnlabeledMarkerData();
     MyClient.DisableDeviceData();
-    if( bReadCentroids )
-    {
-      MyClient.DisableCentroidData();
-    }
 
     // Disconnect and dispose
     int t = clock();
