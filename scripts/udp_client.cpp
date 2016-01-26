@@ -158,7 +158,7 @@ int main( int argc, char* argv[] )
   // Program options
   
   std::string HostName = "192.168.10.81";
-  std::string TargetSubjectName = "QAV_BLUE";
+  std::string TargetSubjectName = "QAV_GREEN";
   std::string ViconBaseFrame = "/world";
 
   // do the ROS setup
@@ -198,15 +198,6 @@ int main( int argc, char* argv[] )
   double QuaternionCheck = 0.0;
 
   std::ofstream ofs;
-  if(!LogFile.empty())
-  {
-    ofs.open(LogFile.c_str());
-    if(!ofs.is_open())
-    {
-      std::cout << "Could not open log file <" << LogFile << ">...exiting" << std::endl;
-      return 1;
-    }
-  }
   // Make a new client
   Client MyClient;
 
