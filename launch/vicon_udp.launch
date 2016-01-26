@@ -1,7 +1,7 @@
 <launch>
 
   <node name="vicon_client" pkg="vicon_udp" type="udp_client">
-    <param name="target_subject_name" value="PelicanGreen" />
+    <!-- <param name="target_subject_name" value="PelicanGreen" /> -->
   </node>
 
 </launch>
