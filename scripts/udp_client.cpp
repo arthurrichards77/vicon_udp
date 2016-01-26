@@ -389,6 +389,10 @@ int main( int argc, char* argv[] )
 
       }
 
+      // run ROS activities
+      //ros::spinOnce(); // this line produces a boost exception
+      //loop_rate.sleep();
+
     }
 
     MyClient.DisableSegmentData();
