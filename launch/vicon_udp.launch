@@ -1,10 +1,7 @@
 <launch>
 
-  <node name="vicon_client" pkg="vicon_udp" type="udp_client">
-    <param name="target_subject_name" value="QAV_GREEN" />
-  </node>
-
-  <node name="vicon_enable" pkg="vicon_udp" type="udp_enable">
+  <node name="vicon_client" pkg="vicon_udp" type="receive.py" output="screen" >
+    <param name="target_subject_name" value="PelicanGreen" />
   </node>
 
 </launch>

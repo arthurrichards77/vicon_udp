@@ -8,7 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/vicon_udp</url>
-  <depend package="roscpp"/>
+  <depend package="rospy"/>
   <depend package="tf"/>
   <depend package="geometry_msgs"/>
 
