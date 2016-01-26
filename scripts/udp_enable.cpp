@@ -267,6 +267,8 @@ int main( int argc, char* argv[] )
     if( EnableMultiCast )
     {
       assert( MyClient.IsConnected().Connected );
+      MyClient.StopTransmittingMulticast();
+      sleep(1);
       MyClient.StartTransmittingMulticast( HostName, MulticastAddress );
     }
 

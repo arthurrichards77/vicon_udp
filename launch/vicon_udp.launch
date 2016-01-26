@@ -1,10 +1,16 @@
 <launch>
 
+  <param name="vicon_server_hostname" value="192.168.10.1" />
+  <param name="vicon_multicast_address" value="224.0.0.0:44801" />
+  <param name="vicon_client_hostname" value="192.168.10.81" />
+  <param name="vicon_tf_parent_frame" value="world" />
+
   <node name="vicon_client" pkg="vicon_udp" type="udp_client">
+    <param name="vicon_target_subject" value="QAV_GREEN" />
   </node>
 
   <node name="vicon_enable" pkg="vicon_udp" type="udp_enable">
   </node>
 
 </launch>
-  
+ 

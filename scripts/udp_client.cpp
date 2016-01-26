@@ -155,12 +155,19 @@ namespace
 
 int main( int argc, char* argv[] )
 {
+
+  std::cout << "Starting Vicon UDP connector..." << std::endl << std::flush;
+    
   // Program options
   
   std::string HostName = "192.168.10.81";
   std::string TargetSubjectName = "QAV_GREEN";
   std::string ViconBaseFrame = "/world";
+  std::string MulticastAddress = "224.0.0.0:44801";
 
+  // scaling constant
+  double pos_scale = 1e-3;
+  
   // do the ROS setup
   ros::init(argc, argv, "vicon_udp");
   ros::NodeHandle n;
@@ -168,10 +175,39 @@ int main( int argc, char* argv[] )
   ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
   ros::Rate loop_rate(100);
 
+  // ROS parameters
+  std::string s;
+  // mutlicast address
+  if (n.getParam("vicon_multicast_address", s)) {
+    MulticastAddress = s;
+    std::cout << "Got multicast " << MulticastAddress << " from parameter." << std::endl;
+  }
+  // own hostname
+  if (n.getParam("vicon_client_hostname", s)) {
+    HostName = s;
+    std::cout << "Got hostname " << HostName << " from parameter." << std::endl;
+  }
+  // vicon frame ID
+  if (n.getParam("vicon_tf_parent_frame", s)) {
+    ViconBaseFrame = s;
+    std::cout << "Got frame ID " << ViconBaseFrame << " from parameter." << std::endl;
+  }
+  // tracking object (this one is private as unique to each node)
+  // try the private thing using the "bare" method
+  //if (ros::param::has("~vicon_target_subject")) {
+  //   ros::param::get("~vicon_target_subject", TargetSubjectName);
+  //}
+
+  std::cout << "HostName: " << HostName << std::endl;
+  std::cout << "Multicast: " << MulticastAddress << std::endl;
+  std::cout << "Parent frame: " << ViconBaseFrame << std::endl;
+  std::cout << "Target subject: " << TargetSubjectName << std::endl;
+
   // initialize the transform
   geometry_msgs::TransformStamped MyTransform;
   MyTransform.header.frame_id = ViconBaseFrame;
-
+  //ROS_INFO("Publishing vicon object %s/%s on topic %s", TargetSubjectName.c_str(), TargetSubjectName.c_str(), TopicName.c_str());
+  
   // initialize transform broadcaster
   tf::TransformBroadcaster TfBroadcaster;
   tf::Transform MyTfTransform;
@@ -182,7 +218,6 @@ int main( int argc, char* argv[] )
   // --multicast
   // kill off internal app
   std::string LogFile = "";
-  std::string MulticastAddress = "224.0.0.0:44801";
   bool ConnectToMultiCast = true;
   bool EnableMultiCast = false;
   bool EnableHapticTest = false;
@@ -204,9 +239,10 @@ int main( int argc, char* argv[] )
   // Make a new client
   Client MyClient;
 
-  for(int i=0; i != 3; ++i) // repeat to check disconnecting doesn't wreck next connect
+  for(int i=0; i != 1; ++i) // repeat to check disconnecting doesn't wreck next connect
   {
     // Connect to a server
+    ROS_INFO("Connecting to multicast %s as host %s", MulticastAddress.c_str(), HostName.c_str());
     std::cout << "Connecting to " << HostName << " ..." << std::flush;
     while( !MyClient.IsConnected().Connected )
     {
@@ -225,14 +261,15 @@ int main( int argc, char* argv[] )
       }
       if(!ok)
       {
-        std::cout << "Warning - connect failed..." << std::endl;
+        //std::cout << "Warning - connect failed..." << std::endl;
+        ROS_WARN("Vicon connection failed...");
       }
 
 
       std::cout << ".";
       sleep(1);
     }
-    std::cout << std::endl;
+    std::cout << "Connected" << std::endl;
 
     // Enable some different data types
     MyClient.EnableSegmentData();
@@ -280,6 +317,9 @@ int main( int argc, char* argv[] )
       MyClient.StartTransmittingMulticast( HostName, MulticastAddress );
     }
 
+    //ROS_INFO("Publishing vicon object %s relative to %s", TargetSubjectName.c_str(), ViconBaseFrame.c_str());
+    ROS_INFO("Publishing vicon object %s", TargetSubjectName.c_str());
+
     size_t FrameRateWindow = 1000; // frames
     size_t Counter = 0;
     clock_t LastTime = clock();
@@ -295,24 +335,7 @@ int main( int argc, char* argv[] )
         
         output_stream << ".";
       }
-      output_stream << std::endl;
-      if(++Counter == FrameRateWindow)
-      {
-        clock_t Now = clock();
-        double FrameRate = (double)(FrameRateWindow * CLOCKS_PER_SEC) / (double)(Now - LastTime);
-        if(!LogFile.empty())
-        {
-          time_t rawtime;
-          struct tm * timeinfo;
-          time ( &rawtime );
-          timeinfo = localtime ( &rawtime );
-
-          ofs << "Frame rate = " << FrameRate << " at " <<  asctime (timeinfo)<< std::endl;
-        }
-
-        LastTime = Now;
-        Counter = 0;
-      }
+      output_stream << "Got it" << std::endl;      
 
       // Get the frame number
       Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
@@ -365,9 +388,9 @@ int main( int argc, char* argv[] )
       if ((QuaternionCheck <= 1e-15) && (QuaternionCheck >= -1e-15)) {
 
         // populate the transform
-        MyTransform.transform.translation.x = _Output_GetSegmentGlobalTranslation.Translation[ 0 ];
-        MyTransform.transform.translation.y = _Output_GetSegmentGlobalTranslation.Translation[ 1 ];
-        MyTransform.transform.translation.z = _Output_GetSegmentGlobalTranslation.Translation[ 2 ];
+        MyTransform.transform.translation.x = _Output_GetSegmentGlobalTranslation.Translation[ 0 ] * pos_scale;
+        MyTransform.transform.translation.y = _Output_GetSegmentGlobalTranslation.Translation[ 1 ] * pos_scale;
+        MyTransform.transform.translation.z = _Output_GetSegmentGlobalTranslation.Translation[ 2 ] * pos_scale;
 
         MyTransform.transform.rotation.x = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ];
         MyTransform.transform.rotation.y = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ];
@@ -378,9 +401,9 @@ int main( int argc, char* argv[] )
         pose_pub.publish(MyTransform);
 
         // and the TF broadcast
-        MyTfTransform.setOrigin( tf::Vector3(_Output_GetSegmentGlobalTranslation.Translation[ 0 ] / 1.0e3,
-                                             _Output_GetSegmentGlobalTranslation.Translation[ 1 ] / 1.0e3,
-                                             _Output_GetSegmentGlobalTranslation.Translation[ 2 ] / 1.0e3) );
+        MyTfTransform.setOrigin( tf::Vector3(_Output_GetSegmentGlobalTranslation.Translation[ 0 ] * pos_scale,
+                                             _Output_GetSegmentGlobalTranslation.Translation[ 1 ] * pos_scale,
+                                             _Output_GetSegmentGlobalTranslation.Translation[ 2 ] * pos_scale) );
         MyTfTransform.setRotation( tf::Quaternion(_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ],
 						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ],
 						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ],
@@ -399,6 +422,8 @@ int main( int argc, char* argv[] )
     MyClient.DisableMarkerData();
     MyClient.DisableUnlabeledMarkerData();
     MyClient.DisableDeviceData();
+
+    ROS_INFO("Disconnecting from Vicon...");
 
     // Disconnect and dispose
     int t = clock();
