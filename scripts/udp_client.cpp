@@ -154,7 +154,7 @@ namespace
 int main( int argc, char* argv[] )
 {
   // Program options
-  
+  std::string ServerName = "192.168.10.1:801";
   std::string HostName = "192.168.10.81";
   std::string TargetSubjectName = "QAV_GREEN";
   std::string ViconBaseFrame = "/world";
@@ -163,8 +163,6 @@ int main( int argc, char* argv[] )
   // do the ROS setup
   ros::init(argc, argv, "vicon_udp");
   ros::NodeHandle n;
-  std::string TopicName = "/vicon/" + TargetSubjectName + "/" + TargetSubjectName;
-  ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
   ros::Rate loop_rate(100);
 
   // parameters
@@ -173,6 +171,10 @@ int main( int argc, char* argv[] )
     ros::param::get("~target_subject_name",TargetSubjectName);
   }
 
+  // the publisher
+  std::string TopicName = "/vicon/" + TargetSubjectName + "/" + TargetSubjectName;
+  ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
+ 
   // initialize the transform
   geometry_msgs::TransformStamped MyTransform;
   MyTransform.header.frame_id = ViconBaseFrame;
@@ -243,6 +245,17 @@ std::cout << "Version: " << _Output_GetVersion.Major << "."
 						 << _Output_GetVersion.Point << std::endl;
 
 ROS_INFO("Tracking object %s", TargetSubjectName.c_str());
+
+// now add multicast enable here
+Client CtrlClient;
+CtrlClient.Connect(ServerName);
+assert( CtrlClient.IsConnected().Connected );      
+ROS_INFO("Enabling multicast");
+CtrlClient.EnableSegmentData();    
+CtrlClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ServerPush );
+CtrlClient.StopTransmittingMulticast();
+CtrlClient.StartTransmittingMulticast(ServerName, MulticastAddress);
+ROS_INFO("Multicast running");
 
 // Loop until a key is pressed
 while( ros::ok() )
@@ -346,6 +359,8 @@ MyClient.DisableDeviceData();
 int t = clock();
 std::cout << " Disconnecting..." << std::endl;
 MyClient.Disconnect();
+CtrlClient.StopTransmittingMulticast();
+CtrlClient.Disconnect();
 int dt = clock() - t;
 double secs = (double) (dt)/(double)CLOCKS_PER_SEC;
 std::cout << " Disconnect time = " << secs << " secs" << std::endl;
