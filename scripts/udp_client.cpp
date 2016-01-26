@@ -158,7 +158,7 @@ int main( int argc, char* argv[] )
   // Program options
   
   std::string HostName = "192.168.10.81";
-  std::string TargetSubjectName = "QAV_GREEN";
+  std::string TargetSubjectName = "QAV_BLUE";
   std::string ViconBaseFrame = "/world";
 
   // do the ROS setup
@@ -167,6 +167,12 @@ int main( int argc, char* argv[] )
   std::string TopicName = "/vicon/" + TargetSubjectName + "/" + TargetSubjectName;
   ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
   ros::Rate loop_rate(100);
+
+  // parameters
+  if (ros::param::has("~target_subject_name")) {
+    ROS_INFO("Got target parameter");
+    ros::param::get("~target_subject_name",TargetSubjectName);
+  }
 
   // initialize the transform
   geometry_msgs::TransformStamped MyTransform;
@@ -234,6 +240,8 @@ int main( int argc, char* argv[] )
     }
     std::cout << std::endl;
 
+    ROS_INFO("Connected to multicast address %s", MulticastAddress.c_str());
+
     // Enable some different data types
     MyClient.EnableSegmentData();
     //MyClient.EnableMarkerData();
@@ -280,6 +288,8 @@ int main( int argc, char* argv[] )
       MyClient.StartTransmittingMulticast( HostName, MulticastAddress );
     }
 
+    ROS_INFO("Tracking object %s", TargetSubjectName.c_str());
+
     size_t FrameRateWindow = 1000; // frames
     size_t Counter = 0;
     clock_t LastTime = clock();
@@ -295,24 +305,7 @@ int main( int argc, char* argv[] )
         
         output_stream << ".";
       }
-      output_stream << std::endl;
-      if(++Counter == FrameRateWindow)
-      {
-        clock_t Now = clock();
-        double FrameRate = (double)(FrameRateWindow * CLOCKS_PER_SEC) / (double)(Now - LastTime);
-        if(!LogFile.empty())
-        {
-          time_t rawtime;
-          struct tm * timeinfo;
-          time ( &rawtime );
-          timeinfo = localtime ( &rawtime );
-
-          ofs << "Frame rate = " << FrameRate << " at " <<  asctime (timeinfo)<< std::endl;
-        }
-
-        LastTime = Now;
-        Counter = 0;
-      }
+      output_stream << std::endl;      
 
       // Get the frame number
       Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
