@@ -193,161 +193,161 @@ int main( int argc, char* argv[] )
   // Make a new client
   Client MyClient;
 
-    // Connect to a server
-    std::cout << "Connecting to " << HostName << " ..." << std::flush;
-    while( !MyClient.IsConnected().Connected )
-    {
-      // Direct connection
+// Connect to a server
+std::cout << "Connecting to " << HostName << " ..." << std::flush;
+while( !MyClient.IsConnected().Connected )
+{
+  // Direct connection
 
-      bool ok = false;
-      // Multicast connection
-      ok = ( MyClient.ConnectToMulticast( HostName, MulticastAddress ).Result == Result::Success );
+  bool ok = false;
+  // Multicast connection
+  ok = ( MyClient.ConnectToMulticast( HostName, MulticastAddress ).Result == Result::Success );
 
-      if(!ok)
-      {
-        std::cout << "Warning - connect failed..." << std::endl;
-      }
+  if(!ok)
+  {
+	std::cout << "Warning - connect failed..." << std::endl;
+  }
 
-      std::cout << ".";
-      sleep(1);
-    }
-    std::cout << "Connected" << std::endl;
+  std::cout << ".";
+  sleep(1);
+}
+std::cout << "Connected" << std::endl;
 
-    ROS_INFO("Connected to multicast address %s", MulticastAddress.c_str());
+ROS_INFO("Connected to multicast address %s", MulticastAddress.c_str());
 
-    // Enable some different data types
-    MyClient.EnableSegmentData();
+// Enable some different data types
+MyClient.EnableSegmentData();
 
-    // Set the streaming mode
-    //MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPull );
-    // MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPullPreFetch );
-    MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ServerPush );
+// Set the streaming mode
+//MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPull );
+// MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPullPreFetch );
+MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ServerPush );
 
-    // Set the global up axis
-    MyClient.SetAxisMapping( Direction::Forward, 
-                             Direction::Left, 
-                             Direction::Up ); // Z-up
-    // MyClient.SetGlobalUpAxis( Direction::Forward, 
-    //                           Direction::Up, 
-    //                           Direction::Right ); // Y-up
+// Set the global up axis
+MyClient.SetAxisMapping( Direction::Forward, 
+						 Direction::Left, 
+						 Direction::Up ); // Z-up
+// MyClient.SetGlobalUpAxis( Direction::Forward, 
+//                           Direction::Up, 
+//                           Direction::Right ); // Y-up
 
-    Output_GetAxisMapping _Output_GetAxisMapping = MyClient.GetAxisMapping();
-    std::cout << "Axis Mapping: X-" << Adapt( _Output_GetAxisMapping.XAxis ) 
-                           << " Y-" << Adapt( _Output_GetAxisMapping.YAxis ) 
-                           << " Z-" << Adapt( _Output_GetAxisMapping.ZAxis ) << std::endl;
+Output_GetAxisMapping _Output_GetAxisMapping = MyClient.GetAxisMapping();
+std::cout << "Axis Mapping: X-" << Adapt( _Output_GetAxisMapping.XAxis ) 
+					   << " Y-" << Adapt( _Output_GetAxisMapping.YAxis ) 
+					   << " Z-" << Adapt( _Output_GetAxisMapping.ZAxis ) << std::endl;
 
-    // Discover the version number
-    Output_GetVersion _Output_GetVersion = MyClient.GetVersion();
-    std::cout << "Version: " << _Output_GetVersion.Major << "." 
-                             << _Output_GetVersion.Minor << "." 
-                             << _Output_GetVersion.Point << std::endl;
+// Discover the version number
+Output_GetVersion _Output_GetVersion = MyClient.GetVersion();
+std::cout << "Version: " << _Output_GetVersion.Major << "." 
+						 << _Output_GetVersion.Minor << "." 
+						 << _Output_GetVersion.Point << std::endl;
 
-    ROS_INFO("Tracking object %s", TargetSubjectName.c_str());
+ROS_INFO("Tracking object %s", TargetSubjectName.c_str());
 
-    // Loop until a key is pressed
-    while( ros::ok() )
-    {
-      // Get a frame
-      std::cout << "Waiting for new frame..." << std::endl;      
+// Loop until a key is pressed
+while( ros::ok() )
+{
+  // Get a frame
+  std::cout << "Waiting for new frame..." << std::endl;      
 
-      while( MyClient.GetFrame().Result != Result::Success )
-      {
-        // wait longer
-        std::cout << "." << std::endl;
-        sleep(1);
-      }
+  while( (MyClient.GetFrame().Result != Result::Success) && (ros::ok()) )
+  {
+	// wait longer
+	std::cout << "." << std::endl;
+	sleep(1);
+  }
 
-      // Get the frame number
-      Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
-      std::cout << "Frame Number: " << _Output_GetFrameNumber.FrameNumber << std::endl;
-      Output_GetFrameRate Rate = MyClient.GetFrameRate();
-      std::cout << "Frame rate: "           << Rate.FrameRateHz          << std::endl;
+  // Get the frame number
+  Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
+  std::cout << "Frame Number: " << _Output_GetFrameNumber.FrameNumber << std::endl;
+  Output_GetFrameRate Rate = MyClient.GetFrameRate();
+  std::cout << "Frame rate: "           << Rate.FrameRateHz          << std::endl;
 
-      // Get the timecode
-      Output_GetTimecode _Output_GetTimecode  = MyClient.GetTimecode();
+  // Get the timecode
+  Output_GetTimecode _Output_GetTimecode  = MyClient.GetTimecode();
 
-      std::cout << "Timecode: "
-                << _Output_GetTimecode.Hours               << "h "
-                << _Output_GetTimecode.Minutes             << "m " 
-                << _Output_GetTimecode.Seconds             << "s "
-                << _Output_GetTimecode.Frames              << "f "
-                << _Output_GetTimecode.SubFrame            << "sf "
-                << Adapt( _Output_GetTimecode.FieldFlag ) << " " 
-                << _Output_GetTimecode.Standard            << " " 
-                << _Output_GetTimecode.SubFramesPerFrame   << " " 
-                << _Output_GetTimecode.UserBits            << std::endl << std::endl;
+  std::cout << "Timecode: "
+			<< _Output_GetTimecode.Hours               << "h "
+			<< _Output_GetTimecode.Minutes             << "m " 
+			<< _Output_GetTimecode.Seconds             << "s "
+			<< _Output_GetTimecode.Frames              << "f "
+			<< _Output_GetTimecode.SubFrame            << "sf "
+			<< Adapt( _Output_GetTimecode.FieldFlag ) << " " 
+			<< _Output_GetTimecode.Standard            << " " 
+			<< _Output_GetTimecode.SubFramesPerFrame   << " " 
+			<< _Output_GetTimecode.UserBits            << std::endl << std::endl;
 
-      // Get the global rotation of the target segment
-      Output_GetSegmentGlobalRotationQuaternion _Output_GetSegmentGlobalRotationQuaternion = 
-            MyClient.GetSegmentGlobalRotationQuaternion( TargetSubjectName, TargetSubjectName );
-          std::cout << "+=+= Global Rotation Quaternion of " << TargetSubjectName << "/" << TargetSubjectName
-					              << ": (" << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]     << ", " 
-                                                               << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]     << ", " 
-                                                               << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]     << ", " 
-                                                               << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]     << ") " 
-                                                               << Adapt( _Output_GetSegmentGlobalRotationQuaternion.Occluded ) << std::endl;
+  // Get the global rotation of the target segment
+  Output_GetSegmentGlobalRotationQuaternion _Output_GetSegmentGlobalRotationQuaternion = 
+		MyClient.GetSegmentGlobalRotationQuaternion( TargetSubjectName, TargetSubjectName );
+	  std::cout << "+=+= Global Rotation Quaternion of " << TargetSubjectName << "/" << TargetSubjectName
+				              << ": (" << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]     << ", " 
+														   << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]     << ", " 
+														   << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]     << ", " 
+														   << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]     << ") " 
+														   << Adapt( _Output_GetSegmentGlobalRotationQuaternion.Occluded ) << std::endl;
 
-      // Get the global segment translation
-      Output_GetSegmentGlobalTranslation _Output_GetSegmentGlobalTranslation = 
-            MyClient.GetSegmentGlobalTranslation( TargetSubjectName, TargetSubjectName );
-          std::cout << "+=+= Global Translation of " << TargetSubjectName << "/" << TargetSubjectName
-					              << ": (" << _Output_GetSegmentGlobalTranslation.Translation[ 0 ]  << ", " 
-                                                       << _Output_GetSegmentGlobalTranslation.Translation[ 1 ]  << ", " 
-                                                       << _Output_GetSegmentGlobalTranslation.Translation[ 2 ]  << ") " 
-                                                       << Adapt( _Output_GetSegmentGlobalTranslation.Occluded ) << std::endl;
-      
-      // sanity check based on quaternion
-      QuaternionCheck = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]
-                      + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]
-                      + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]
-                      + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]
-                      - 1.0;
-      std::cout << "==== Quaternion Sanity Check: " << QuaternionCheck << std::endl;
+  // Get the global segment translation
+  Output_GetSegmentGlobalTranslation _Output_GetSegmentGlobalTranslation = 
+		MyClient.GetSegmentGlobalTranslation( TargetSubjectName, TargetSubjectName );
+	  std::cout << "+=+= Global Translation of " << TargetSubjectName << "/" << TargetSubjectName
+				              << ": (" << _Output_GetSegmentGlobalTranslation.Translation[ 0 ]  << ", " 
+												   << _Output_GetSegmentGlobalTranslation.Translation[ 1 ]  << ", " 
+												   << _Output_GetSegmentGlobalTranslation.Translation[ 2 ]  << ") " 
+												   << Adapt( _Output_GetSegmentGlobalTranslation.Occluded ) << std::endl;
+  
+  // sanity check based on quaternion
+  QuaternionCheck = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]
+				  + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]
+				  + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]
+				  + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]
+				  - 1.0;
+  std::cout << "==== Quaternion Sanity Check: " << QuaternionCheck << std::endl;
 
-      if ((QuaternionCheck <= 1e-15) && (QuaternionCheck >= -1e-15)) {
+  if ((QuaternionCheck <= 1e-15) && (QuaternionCheck >= -1e-15)) {
 
-        // populate the transform
-        MyTransform.transform.translation.x = _Output_GetSegmentGlobalTranslation.Translation[ 0 ];
-        MyTransform.transform.translation.y = _Output_GetSegmentGlobalTranslation.Translation[ 1 ];
-        MyTransform.transform.translation.z = _Output_GetSegmentGlobalTranslation.Translation[ 2 ];
+	// populate the transform
+	MyTransform.transform.translation.x = _Output_GetSegmentGlobalTranslation.Translation[ 0 ];
+	MyTransform.transform.translation.y = _Output_GetSegmentGlobalTranslation.Translation[ 1 ];
+	MyTransform.transform.translation.z = _Output_GetSegmentGlobalTranslation.Translation[ 2 ];
 
-        MyTransform.transform.rotation.x = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ];
-        MyTransform.transform.rotation.y = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ];
-        MyTransform.transform.rotation.z = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ];
-        MyTransform.transform.rotation.w = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ];
+	MyTransform.transform.rotation.x = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ];
+	MyTransform.transform.rotation.y = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ];
+	MyTransform.transform.rotation.z = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ];
+	MyTransform.transform.rotation.w = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ];
 
-        // publish the thing
-        pose_pub.publish(MyTransform);
+	// publish the thing
+	pose_pub.publish(MyTransform);
 
-        // and the TF broadcast
-        MyTfTransform.setOrigin( tf::Vector3(_Output_GetSegmentGlobalTranslation.Translation[ 0 ] / 1.0e3,
-                                             _Output_GetSegmentGlobalTranslation.Translation[ 1 ] / 1.0e3,
-                                             _Output_GetSegmentGlobalTranslation.Translation[ 2 ] / 1.0e3) );
-        MyTfTransform.setRotation( tf::Quaternion(_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ],
-						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ],
-						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ],
-						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]) );
-        TfBroadcaster.sendTransform(tf::StampedTransform(MyTfTransform, ros::Time::now(), ViconBaseFrame, TopicName));
+	// and the TF broadcast
+	MyTfTransform.setOrigin( tf::Vector3(_Output_GetSegmentGlobalTranslation.Translation[ 0 ] / 1.0e3,
+										 _Output_GetSegmentGlobalTranslation.Translation[ 1 ] / 1.0e3,
+										 _Output_GetSegmentGlobalTranslation.Translation[ 2 ] / 1.0e3) );
+	MyTfTransform.setRotation( tf::Quaternion(_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ],
+					   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ],
+					   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ],
+					   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]) );
+	TfBroadcaster.sendTransform(tf::StampedTransform(MyTfTransform, ros::Time::now(), ViconBaseFrame, TopicName));
 
-      } 
+  } 
 
-      // run ROS activities
-      //ros::spinOnce(); // this line produces a boost exception
-      //loop_rate.sleep();
+  // run ROS activities
+  //ros::spinOnce(); // this line produces a boost exception
+  //loop_rate.sleep();
 
-    }
+}
 
-    MyClient.DisableSegmentData();
-    MyClient.DisableMarkerData();
-    MyClient.DisableUnlabeledMarkerData();
-    MyClient.DisableDeviceData();
+MyClient.DisableSegmentData();
+MyClient.DisableMarkerData();
+MyClient.DisableUnlabeledMarkerData();
+MyClient.DisableDeviceData();
 
-    // Disconnect and dispose
-    int t = clock();
-    std::cout << " Disconnecting..." << std::endl;
-    MyClient.Disconnect();
-    int dt = clock() - t;
-    double secs = (double) (dt)/(double)CLOCKS_PER_SEC;
-    std::cout << " Disconnect time = " << secs << " secs" << std::endl;
+// Disconnect and dispose
+int t = clock();
+std::cout << " Disconnecting..." << std::endl;
+MyClient.Disconnect();
+int dt = clock() - t;
+double secs = (double) (dt)/(double)CLOCKS_PER_SEC;
+std::cout << " Disconnect time = " << secs << " secs" << std::endl;
 
 }
