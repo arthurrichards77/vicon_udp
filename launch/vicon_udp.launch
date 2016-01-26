@@ -1,7 +1,10 @@
 <launch>
 
-  <node name="vicon_client" pkg="vicon_udp" type="receive.py" output="screen" >
-    <param name="object_name" value="PelicanGreen" />
+  <param name="own_ip" value="192.168.10.81" />
+    
+  <node name="vicon_client" pkg="vicon_udp" type="receive.py" >
+    <param name="object_name" value="QAV_GREEN" />
+    <param name="udp_port" type="int" value="27002" />
   </node>
 
 </launch>
