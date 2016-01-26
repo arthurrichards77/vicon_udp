@@ -169,7 +169,7 @@ int main( int argc, char* argv[] )
   double pos_scale = 1e-3;
   
   // do the ROS setup
-  ros::init(argc, argv, "vicon_udp");
+  ros::init(argc, argv, "udp_client");
   ros::NodeHandle n;
   std::string TopicName = "/vicon/" + TargetSubjectName + "/" + TargetSubjectName;
   ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
@@ -194,9 +194,9 @@ int main( int argc, char* argv[] )
   }
   // tracking object (this one is private as unique to each node)
   // try the private thing using the "bare" method
-  //if (ros::param::has("~vicon_target_subject")) {
-  //   ros::param::get("~vicon_target_subject", TargetSubjectName);
-  //}
+  if (ros::param::has("~vicon_target_subject")) {
+     ros::param::get("~vicon_target_subject", TargetSubjectName);
+  }
 
   std::cout << "HostName: " << HostName << std::endl;
   std::cout << "Multicast: " << MulticastAddress << std::endl;

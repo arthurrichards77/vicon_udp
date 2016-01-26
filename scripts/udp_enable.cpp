@@ -28,6 +28,8 @@
 
 #include <time.h>
 
+#include "ros/ros.h"
+
 using namespace ViconDataStreamSDK::CPP;
 
 #define output_stream if(!LogFile.empty()) ; else std::cout 
@@ -171,7 +173,11 @@ int main( int argc, char* argv[] )
   // Program options
   
   std::string HostName = "192.168.10.1:801";
+  int startup_delay = 10;
 
+  ros::init(argc, argv, "udp_enable");
+  ros::NodeHandle n;
+  
   // log contains:
   // version number
   // log of framerate over time
@@ -186,6 +192,10 @@ int main( int argc, char* argv[] )
   std::vector<std::string> HapticOnList(0);
 
   std::ofstream ofs;
+
+  ROS_INFO("Waiting for start-up delay of %d s", startup_delay);
+  sleep(startup_delay);
+  ROS_INFO("Finished start-up delay of %d s", startup_delay);
 
   // Make a new client
   Client MyClient;
