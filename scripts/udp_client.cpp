@@ -28,8 +28,6 @@
 
 using namespace ViconDataStreamSDK::CPP;
 
-#define output_stream if(!LogFile.empty()) ; else std::cout 
-
 namespace
 {
   std::string Adapt( const bool i_Value )
@@ -157,7 +155,12 @@ int main( int argc, char* argv[] )
 {
 
   std::cout << "Starting Vicon UDP connector..." << std::endl << std::flush;
-    
+ 
+  /* int ii;
+  for (ii=0; ii<=argc; ii++) {
+	  std::cout << argv[ii] << std::endl;
+  } */
+  
   // Program options
   
   std::string HostName = "192.168.10.81";
@@ -173,7 +176,7 @@ int main( int argc, char* argv[] )
   ros::NodeHandle n;
   std::string TopicName = "/vicon/" + TargetSubjectName + "/" + TargetSubjectName;
   ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
-  ros::Rate loop_rate(100);
+  ros::Rate loop_rate(1000);
 
   // ROS parameters
   std::string s;
@@ -217,7 +220,6 @@ int main( int argc, char* argv[] )
   // log of framerate over time
   // --multicast
   // kill off internal app
-  std::string LogFile = "";
   bool ConnectToMultiCast = true;
   bool EnableMultiCast = false;
   bool EnableHapticTest = false;
@@ -227,24 +229,11 @@ int main( int argc, char* argv[] )
   // variables for data retrieval
   Output_GetSegmentGlobalRotationQuaternion _Output_GetSegmentGlobalRotationQuaternion;
   Output_GetSegmentGlobalTranslation _Output_GetSegmentGlobalTranslation;
-
-  double QuaternionCheck = 0.0;
-
-  std::ofstream ofs;
-  if(!LogFile.empty())
-  {
-    ofs.open(LogFile.c_str());
-    if(!ofs.is_open())
-    {
-      std::cout << "Could not open log file <" << LogFile << ">...exiting" << std::endl;
-      return 1;
-    }
-  }
+  Output_GetFrame _Output_GetFrame;
+  
   // Make a new client
   Client MyClient;
 
-  for(int i=0; i != 1; ++i) // repeat to check disconnecting doesn't wreck next connect
-  {
     // Connect to a server
     ROS_INFO("Connecting to multicast %s as host %s", MulticastAddress.c_str(), HostName.c_str());
     std::cout << "Connecting to " << HostName << " ..." << std::flush;
@@ -330,28 +319,29 @@ int main( int argc, char* argv[] )
     // Loop until a key is pressed
     while( ros::ok() )
     {
+		
+      // get ROS stuff done first
+      ros::spinOnce();
+
       // Get a frame
-      output_stream << "Waiting for new frame...";
-      while( MyClient.GetFrame().Result != Result::Success )
-      {
-        // Sleep a little so that we don't lumber the CPU with a busy poll
-        sleep(1);
-        
-        output_stream << ".";
-      }
-      output_stream << "Got it" << std::endl;      
+      std::cout << "Waiting for new frame..." << std::endl << std::flush;
+      _Output_GetFrame = MyClient.GetFrame();
+      if (_Output_GetFrame.Result != Result::Success) {
+		  std::cout << "Didn't get new frame..." << std::endl << std::flush;
+		  continue;
+	  }
 
       // Get the frame number
-      Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
-      output_stream << "Frame Number: " << _Output_GetFrameNumber.FrameNumber << std::endl;
+      //Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
+      //std::cout << "Frame Number: " << _Output_GetFrameNumber.FrameNumber << std::endl;
 
-      Output_GetFrameRate Rate = MyClient.GetFrameRate();
-      std::cout << "Frame rate: "           << Rate.FrameRateHz          << std::endl;
+      //Output_GetFrameRate Rate = MyClient.GetFrameRate();
+      //std::cout << "Frame rate: "           << Rate.FrameRateHz          << std::endl;
 
       // Get the timecode
-      Output_GetTimecode _Output_GetTimecode  = MyClient.GetTimecode();
+      //Output_GetTimecode _Output_GetTimecode  = MyClient.GetTimecode();
 
-      output_stream << "Timecode: "
+      /* std::cout << "Timecode: "
                 << _Output_GetTimecode.Hours               << "h "
                 << _Output_GetTimecode.Minutes             << "m " 
                 << _Output_GetTimecode.Seconds             << "s "
@@ -361,14 +351,15 @@ int main( int argc, char* argv[] )
                 << _Output_GetTimecode.Standard            << " " 
                 << _Output_GetTimecode.SubFramesPerFrame   << " " 
                 << _Output_GetTimecode.UserBits            << std::endl << std::endl;
-
+      */
+      
       // Get the global rotation of the target segment
       _Output_GetSegmentGlobalRotationQuaternion = 
             MyClient.GetSegmentGlobalRotationQuaternion( TargetSubjectName, TargetSubjectName );
 
       // test if we got it OK
       if (_Output_GetSegmentGlobalRotationQuaternion.Result == Result::Success) {
-          output_stream << "+=+= Global Rotation Quaternion of " << TargetSubjectName << "/" << TargetSubjectName
+          std::cout << "+=+= Global Rotation Quaternion of " << TargetSubjectName << "/" << TargetSubjectName
 					              << ": (" << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]     << ", " 
                                                                << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]     << ", " 
                                                                << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]     << ", " 
@@ -386,7 +377,7 @@ int main( int argc, char* argv[] )
 
       // test if we got it OK
       if (_Output_GetSegmentGlobalTranslation.Result == Result::Success) {
-          output_stream << "+=+= Global Translation of " << TargetSubjectName << "/" << TargetSubjectName
+          std::cout << "+=+= Global Translation of " << TargetSubjectName << "/" << TargetSubjectName
 					              << ": (" << _Output_GetSegmentGlobalTranslation.Translation[ 0 ]  << ", " 
                                                        << _Output_GetSegmentGlobalTranslation.Translation[ 1 ]  << ", " 
                                                        << _Output_GetSegmentGlobalTranslation.Translation[ 2 ]  << ") " 
@@ -421,7 +412,6 @@ int main( int argc, char* argv[] )
         TfBroadcaster.sendTransform(tf::StampedTransform(MyTfTransform, ros::Time::now(), ViconBaseFrame, TopicName));
 
       // run ROS activities
-      ros::spinOnce(); // this line produces a boost exception
       loop_rate.sleep();
 
     }
@@ -441,5 +431,4 @@ int main( int argc, char* argv[] )
     double secs = (double) (dt)/(double)CLOCKS_PER_SEC;
     std::cout << " Disconnect time = " << secs << " secs" << std::endl;
 
-  }
 }
