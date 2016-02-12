@@ -154,11 +154,11 @@ namespace
 int main( int argc, char* argv[] )
 {
 
-  std::cout << "Starting Vicon UDP connector..." << std::endl << std::flush;
+  //std::cout << "Starting Vicon UDP connector..." << std::endl << std::flush;
  
   /* int ii;
   for (ii=0; ii<=argc; ii++) {
-	  std::cout << argv[ii] << std::endl;
+	  //std::cout << argv[ii] << std::endl;
   } */
   
   // Program options
@@ -176,24 +176,24 @@ int main( int argc, char* argv[] )
   ros::NodeHandle n;
   std::string TopicName = "/vicon/" + TargetSubjectName + "/" + TargetSubjectName;
   ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
-  ros::Rate loop_rate(1000);
+  ros::Rate loop_rate(300);
 
   // ROS parameters
   std::string s;
   // mutlicast address
   if (n.getParam("vicon_multicast_address", s)) {
     MulticastAddress = s;
-    std::cout << "Got multicast " << MulticastAddress << " from parameter." << std::endl;
+    //std::cout << "Got multicast " << MulticastAddress << " from parameter." << std::endl;
   }
   // own hostname
   if (n.getParam("vicon_client_hostname", s)) {
     HostName = s;
-    std::cout << "Got hostname " << HostName << " from parameter." << std::endl;
+    //std::cout << "Got hostname " << HostName << " from parameter." << std::endl;
   }
   // vicon frame ID
   if (n.getParam("vicon_tf_parent_frame", s)) {
     ViconBaseFrame = s;
-    std::cout << "Got frame ID " << ViconBaseFrame << " from parameter." << std::endl;
+    //std::cout << "Got frame ID " << ViconBaseFrame << " from parameter." << std::endl;
   }
   // tracking object (this one is private as unique to each node)
   // try the private thing using the "bare" method
@@ -201,10 +201,10 @@ int main( int argc, char* argv[] )
      ros::param::get("~vicon_target_subject", TargetSubjectName);
   }
 
-  std::cout << "HostName: " << HostName << std::endl;
-  std::cout << "Multicast: " << MulticastAddress << std::endl;
-  std::cout << "Parent frame: " << ViconBaseFrame << std::endl;
-  std::cout << "Target subject: " << TargetSubjectName << std::endl;
+  //std::cout << "HostName: " << HostName << std::endl;
+  //std::cout << "Multicast: " << MulticastAddress << std::endl;
+  //std::cout << "Parent frame: " << ViconBaseFrame << std::endl;
+  //std::cout << "Target subject: " << TargetSubjectName << std::endl;
 
   // initialize the transform
   geometry_msgs::TransformStamped MyTransform;
@@ -236,7 +236,7 @@ int main( int argc, char* argv[] )
 
     // Connect to a server
     ROS_INFO("Connecting to multicast %s as host %s", MulticastAddress.c_str(), HostName.c_str());
-    std::cout << "Connecting to " << HostName << " ..." << std::flush;
+    //std::cout << "Connecting to " << HostName << " ..." << std::flush;
     while( !MyClient.IsConnected().Connected )
     {
       // Direct connection
@@ -254,15 +254,15 @@ int main( int argc, char* argv[] )
       }
       if(!ok)
       {
-        //std::cout << "Warning - connect failed..." << std::endl;
+        ////std::cout << "Warning - connect failed..." << std::endl;
         ROS_WARN("Vicon connection failed...");
       }
 
 
-      std::cout << ".";
+      //std::cout << ".";
       sleep(1);
     }
-    std::cout << "Connected" << std::endl;
+    //std::cout << "Connected" << std::endl;
 
     // Enable some different data types
     MyClient.EnableSegmentData();
@@ -274,16 +274,16 @@ int main( int argc, char* argv[] )
       MyClient.EnableCentroidData();
     }
 
-    std::cout << "Segment Data Enabled: "          << Adapt( MyClient.IsSegmentDataEnabled().Enabled )         << std::endl;
-    std::cout << "Marker Data Enabled: "           << Adapt( MyClient.IsMarkerDataEnabled().Enabled )          << std::endl;
-    std::cout << "Unlabeled Marker Data Enabled: " << Adapt( MyClient.IsUnlabeledMarkerDataEnabled().Enabled ) << std::endl;
-    std::cout << "Device Data Enabled: "           << Adapt( MyClient.IsDeviceDataEnabled().Enabled )          << std::endl;
-    std::cout << "Centroid Data Enabled: "         << Adapt( MyClient.IsCentroidDataEnabled().Enabled )        << std::endl;
+    //std::cout << "Segment Data Enabled: "          << Adapt( MyClient.IsSegmentDataEnabled().Enabled )         << std::endl;
+    //std::cout << "Marker Data Enabled: "           << Adapt( MyClient.IsMarkerDataEnabled().Enabled )          << std::endl;
+    //std::cout << "Unlabeled Marker Data Enabled: " << Adapt( MyClient.IsUnlabeledMarkerDataEnabled().Enabled ) << std::endl;
+    //std::cout << "Device Data Enabled: "           << Adapt( MyClient.IsDeviceDataEnabled().Enabled )          << std::endl;
+    //std::cout << "Centroid Data Enabled: "         << Adapt( MyClient.IsCentroidDataEnabled().Enabled )        << std::endl;
 
     // Set the streaming mode
-    //MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPull );
+    MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPull );
     // MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPullPreFetch );
-    MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ServerPush );
+    // MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ServerPush );
 
     // Set the global up axis
     MyClient.SetAxisMapping( Direction::Forward, 
@@ -294,15 +294,15 @@ int main( int argc, char* argv[] )
     //                           Direction::Right ); // Y-up
 
     Output_GetAxisMapping _Output_GetAxisMapping = MyClient.GetAxisMapping();
-    std::cout << "Axis Mapping: X-" << Adapt( _Output_GetAxisMapping.XAxis ) 
-                           << " Y-" << Adapt( _Output_GetAxisMapping.YAxis ) 
-                           << " Z-" << Adapt( _Output_GetAxisMapping.ZAxis ) << std::endl;
+    //std::cout << "Axis Mapping: X-" << Adapt( _Output_GetAxisMapping.XAxis ) 
+     //                      << " Y-" << Adapt( _Output_GetAxisMapping.YAxis ) 
+     //                      << " Z-" << Adapt( _Output_GetAxisMapping.ZAxis ) << std::endl;
 
     // Discover the version number
     Output_GetVersion _Output_GetVersion = MyClient.GetVersion();
-    std::cout << "Version: " << _Output_GetVersion.Major << "." 
-                             << _Output_GetVersion.Minor << "." 
-                             << _Output_GetVersion.Point << std::endl;
+    //std::cout << "Version: " << _Output_GetVersion.Major << "." 
+    //                         << _Output_GetVersion.Minor << "." 
+    //                         << _Output_GetVersion.Point << std::endl;
 
     if( EnableMultiCast )
     {
@@ -323,25 +323,32 @@ int main( int argc, char* argv[] )
       // get ROS stuff done first
       ros::spinOnce();
 
+      // a pause
+      loop_rate.sleep();
+
+      try {
+
       // Get a frame
-      std::cout << "Waiting for new frame..." << std::endl << std::flush;
+      //ROS_INFO("Getting new frame...");
       _Output_GetFrame = MyClient.GetFrame();
+      //ROS_INFO("Got frame");
       if (_Output_GetFrame.Result != Result::Success) {
-		  std::cout << "Didn't get new frame..." << std::endl << std::flush;
+		  ROS_INFO("Missed frame");
+		  //std::cout << "Didn't get new frame..." << std::endl << std::flush;
 		  continue;
 	  }
 
       // Get the frame number
       //Output_GetFrameNumber _Output_GetFrameNumber = MyClient.GetFrameNumber();
-      //std::cout << "Frame Number: " << _Output_GetFrameNumber.FrameNumber << std::endl;
+      ////std::cout << "Frame Number: " << _Output_GetFrameNumber.FrameNumber << std::endl;
 
       //Output_GetFrameRate Rate = MyClient.GetFrameRate();
-      //std::cout << "Frame rate: "           << Rate.FrameRateHz          << std::endl;
+      ////std::cout << "Frame rate: "           << Rate.FrameRateHz          << std::endl;
 
       // Get the timecode
       //Output_GetTimecode _Output_GetTimecode  = MyClient.GetTimecode();
 
-      /* std::cout << "Timecode: "
+      /* //std::cout << "Timecode: "
                 << _Output_GetTimecode.Hours               << "h "
                 << _Output_GetTimecode.Minutes             << "m " 
                 << _Output_GetTimecode.Seconds             << "s "
@@ -359,15 +366,15 @@ int main( int argc, char* argv[] )
 
       // test if we got it OK
       if (_Output_GetSegmentGlobalRotationQuaternion.Result == Result::Success) {
-          std::cout << "+=+= Global Rotation Quaternion of " << TargetSubjectName << "/" << TargetSubjectName
+          /* std::cout << "+=+= Global Rotation Quaternion of " << TargetSubjectName << "/" << TargetSubjectName
 					              << ": (" << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]     << ", " 
                                                                << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]     << ", " 
                                                                << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]     << ", " 
                                                                << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]     << ") " 
-                                                               << Adapt( _Output_GetSegmentGlobalRotationQuaternion.Occluded ) << std::endl;
+                                                               << Adapt( _Output_GetSegmentGlobalRotationQuaternion.Occluded ) << std::endl; */
       }
       else {
-         std::cout << "Failed to get quaternion" << std::endl;
+         //std::cout << "Failed to get quaternion" << std::endl;
          continue;
       }
 
@@ -377,14 +384,14 @@ int main( int argc, char* argv[] )
 
       // test if we got it OK
       if (_Output_GetSegmentGlobalTranslation.Result == Result::Success) {
-          std::cout << "+=+= Global Translation of " << TargetSubjectName << "/" << TargetSubjectName
+          /* std::cout << "+=+= Global Translation of " << TargetSubjectName << "/" << TargetSubjectName
 					              << ": (" << _Output_GetSegmentGlobalTranslation.Translation[ 0 ]  << ", " 
                                                        << _Output_GetSegmentGlobalTranslation.Translation[ 1 ]  << ", " 
                                                        << _Output_GetSegmentGlobalTranslation.Translation[ 2 ]  << ") " 
-                                                       << Adapt( _Output_GetSegmentGlobalTranslation.Occluded ) << std::endl;
+                                                       << Adapt( _Output_GetSegmentGlobalTranslation.Occluded ) << std::endl; */
       }
       else {
-         std::cout << "Failed to get translation" << std::endl;
+         //std::cout << "Failed to get translation" << std::endl;
          continue;
       }
 
@@ -410,10 +417,10 @@ int main( int argc, char* argv[] )
 						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ],
 						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]) );
         TfBroadcaster.sendTransform(tf::StampedTransform(MyTfTransform, ros::Time::now(), ViconBaseFrame, TopicName));
-
-      // run ROS activities
-      loop_rate.sleep();
-
+      }
+      catch (...) {
+		  ROS_INFO("Vicon problem");
+	  }
     }
 
     MyClient.DisableSegmentData();
@@ -425,10 +432,10 @@ int main( int argc, char* argv[] )
 
     // Disconnect and dispose
     int t = clock();
-    std::cout << " Disconnecting..." << std::endl;
+    //std::cout << " Disconnecting..." << std::endl;
     MyClient.Disconnect();
     int dt = clock() - t;
     double secs = (double) (dt)/(double)CLOCKS_PER_SEC;
-    std::cout << " Disconnect time = " << secs << " secs" << std::endl;
+    //std::cout << " Disconnect time = " << secs << " secs" << std::endl;
 
 }
