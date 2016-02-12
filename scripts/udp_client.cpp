@@ -224,6 +224,10 @@ int main( int argc, char* argv[] )
   bool bReadCentroids = false;
   std::vector<std::string> HapticOnList(0);
 
+  // variables for data retrieval
+  Output_GetSegmentGlobalRotationQuaternion _Output_GetSegmentGlobalRotationQuaternion;
+  Output_GetSegmentGlobalTranslation _Output_GetSegmentGlobalTranslation;
+
   double QuaternionCheck = 0.0;
 
   std::ofstream ofs;
@@ -359,33 +363,39 @@ int main( int argc, char* argv[] )
                 << _Output_GetTimecode.UserBits            << std::endl << std::endl;
 
       // Get the global rotation of the target segment
-      Output_GetSegmentGlobalRotationQuaternion _Output_GetSegmentGlobalRotationQuaternion = 
+      _Output_GetSegmentGlobalRotationQuaternion = 
             MyClient.GetSegmentGlobalRotationQuaternion( TargetSubjectName, TargetSubjectName );
+
+      // test if we got it OK
+      if (_Output_GetSegmentGlobalRotationQuaternion.Result == Result::Success) {
           output_stream << "+=+= Global Rotation Quaternion of " << TargetSubjectName << "/" << TargetSubjectName
 					              << ": (" << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]     << ", " 
                                                                << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]     << ", " 
                                                                << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]     << ", " 
                                                                << _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]     << ") " 
                                                                << Adapt( _Output_GetSegmentGlobalRotationQuaternion.Occluded ) << std::endl;
+      }
+      else {
+         std::cout << "Failed to get quaternion" << std::endl;
+         continue;
+      }
 
       // Get the global segment translation
-      Output_GetSegmentGlobalTranslation _Output_GetSegmentGlobalTranslation = 
+      _Output_GetSegmentGlobalTranslation = 
             MyClient.GetSegmentGlobalTranslation( TargetSubjectName, TargetSubjectName );
+
+      // test if we got it OK
+      if (_Output_GetSegmentGlobalTranslation.Result == Result::Success) {
           output_stream << "+=+= Global Translation of " << TargetSubjectName << "/" << TargetSubjectName
 					              << ": (" << _Output_GetSegmentGlobalTranslation.Translation[ 0 ]  << ", " 
                                                        << _Output_GetSegmentGlobalTranslation.Translation[ 1 ]  << ", " 
                                                        << _Output_GetSegmentGlobalTranslation.Translation[ 2 ]  << ") " 
                                                        << Adapt( _Output_GetSegmentGlobalTranslation.Occluded ) << std::endl;
-      
-      // sanity check based on quaternion
-      QuaternionCheck = _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 0 ]
-                      + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 1 ]
-                      + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ]
-                      + _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]*_Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]
-                      - 1.0;
-      output_stream << "==== Quaternion Sanity Check: " << QuaternionCheck << std::endl;
-
-      if ((QuaternionCheck <= 1e-15) && (QuaternionCheck >= -1e-15)) {
+      }
+      else {
+         std::cout << "Failed to get translation" << std::endl;
+         continue;
+      }
 
         // populate the transform
         MyTransform.transform.translation.x = _Output_GetSegmentGlobalTranslation.Translation[ 0 ] * pos_scale;
@@ -410,11 +420,9 @@ int main( int argc, char* argv[] )
 						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]) );
         TfBroadcaster.sendTransform(tf::StampedTransform(MyTfTransform, ros::Time::now(), ViconBaseFrame, TopicName));
 
-      }
-
       // run ROS activities
-      //ros::spinOnce(); // this line produces a boost exception
-      //loop_rate.sleep();
+      ros::spinOnce(); // this line produces a boost exception
+      loop_rate.sleep();
 
     }
 
