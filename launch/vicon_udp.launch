@@ -7,7 +7,7 @@
   <param name="vicon_tf_parent_frame" value="world" />
   -->
 
-  <node name="vicon_client" pkg="vicon_udp" type="udp_client">
+  <node name="vicon_client" pkg="vicon_udp" type="udp_client" respawn="true">
     <!-- param name="vicon_target_subject" value="QAV_GREEN" /-->
   </node>
 

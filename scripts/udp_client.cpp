@@ -174,7 +174,7 @@ int main( int argc, char* argv[] )
   // do the ROS setup
   ros::init(argc, argv, "udp_client");
   ros::NodeHandle n;
-  std::string TopicName = "/vicon/" + TargetSubjectName + "/" + TargetSubjectName;
+  std::string TopicName = "vicon/" + TargetSubjectName + "/" + TargetSubjectName;
   ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
   ros::Rate loop_rate(300);
 
@@ -326,7 +326,7 @@ int main( int argc, char* argv[] )
       // a pause
       loop_rate.sleep();
 
-      try {
+      //try {
 
       // Get a frame
       //ROS_INFO("Getting new frame...");
@@ -417,10 +417,11 @@ int main( int argc, char* argv[] )
 						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 2 ],
 						   _Output_GetSegmentGlobalRotationQuaternion.Rotation[ 3 ]) );
         TfBroadcaster.sendTransform(tf::StampedTransform(MyTfTransform, ros::Time::now(), ViconBaseFrame, TopicName));
-      }
-      catch (...) {
+      //}
+      /* catch (...) {
 		  ROS_INFO("Vicon problem");
 	  }
+      */
     }
 
     MyClient.DisableSegmentData();
