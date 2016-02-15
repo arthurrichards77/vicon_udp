@@ -266,6 +266,8 @@ int main( int argc, char* argv[] )
       MyClient.StartTransmittingMulticast( HostName, MulticastAddress );
     }
 
+    ROS_INFO("Starting multicast on address %s", MulticastAddress.c_str());
+
     // wait for a key to be pressed
     std::cout << "Multicast has been started" << std::endl;
     std::cout << "Press Ctrl+C to stop" << std::endl;

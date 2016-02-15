@@ -1,7 +1,7 @@
 <launch>
 
   <param name="vicon_server_hostname" value="192.168.10.1" />
-  <param name="vicon_multicast_address" value="224.0.0.0:44801" />
+  <param name="vicon_multicast_address" value="224.0.0.1:44801" />
   <param name="vicon_client_hostname" value="192.168.10.81" />
   <param name="vicon_tf_parent_frame" value="world" />
 
