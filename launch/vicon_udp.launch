@@ -8,7 +8,7 @@
   -->
 
   <node name="vicon_client" pkg="vicon_udp" type="udp_client" respawn="true">
-    <!-- param name="vicon_target_subject" value="QAV_GREEN" /-->
+    <param name="vicon_target_subject" value="QAV_GREEN" />
   </node>
 
   <node name="vicon_enable" pkg="vicon_udp" type="udp_enable">

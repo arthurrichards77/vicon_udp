@@ -174,9 +174,6 @@ int main( int argc, char* argv[] )
   // do the ROS setup
   ros::init(argc, argv, "udp_client");
   ros::NodeHandle n;
-  std::string TopicName = "vicon/" + TargetSubjectName + "/" + TargetSubjectName;
-  ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
-  ros::Rate loop_rate(300);
 
   // ROS parameters
   std::string s;
@@ -200,6 +197,11 @@ int main( int argc, char* argv[] )
   if (ros::param::has("~vicon_target_subject")) {
      ros::param::get("~vicon_target_subject", TargetSubjectName);
   }
+
+  // set up ROS publishing
+  std::string TopicName = "vicon/" + TargetSubjectName + "/" + TargetSubjectName;
+  ros::Publisher pose_pub = n.advertise<geometry_msgs::TransformStamped>(TopicName, 1000);
+  ros::Rate loop_rate(300);
 
   //std::cout << "HostName: " << HostName << std::endl;
   //std::cout << "Multicast: " << MulticastAddress << std::endl;
