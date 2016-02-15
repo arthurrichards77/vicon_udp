@@ -18,21 +18,15 @@
 #include <vector>
 #include <string.h>
 
-#ifdef WIN32
-  #include <conio.h>   // For _kbhit()
-  #include <cstdio>   // For getchar()
-  #include <windows.h> // For Sleep()
-#else
-  #include <unistd.h> // For sleep()
-#endif // WIN32
+
+#include <unistd.h> // For sleep()
+
 
 #include <time.h>
 
 #include "ros/ros.h"
 
 using namespace ViconDataStreamSDK::CPP;
-
-#define output_stream if(!LogFile.empty()) ; else std::cout 
 
 namespace
 {
@@ -154,18 +148,6 @@ namespace
         return "Unknown";
     }
   }
-#ifdef WIN32
-  bool Hit()
-  {
-    bool hit = false;
-    while( _kbhit() )
-    {
-      getchar();
-      hit = true;
-    }
-    return hit;
-  }
-#endif
 }
 
 int main( int argc, char* argv[] )
@@ -177,7 +159,8 @@ int main( int argc, char* argv[] )
 
   ros::init(argc, argv, "udp_enable");
   ros::NodeHandle n;
-  
+  ros::Rate loop_rate(1);
+
   // log contains:
   // version number
   // log of framerate over time
@@ -193,18 +176,33 @@ int main( int argc, char* argv[] )
 
   std::ofstream ofs;
 
+  // ROS parameters
+  std::string s;
+  // mutlicast address
+  if (n.getParam("vicon_multicast_address", s)) {
+    MulticastAddress = s;
+    //std::cout << "Got multicast " << MulticastAddress << " from parameter." << std::endl;
+  }
+  // own hostname
+  if (n.getParam("vicon_server_hostname", s)) {
+    HostName = s;
+    //std::cout << "Got hostname " << HostName << " from parameter." << std::endl;
+  }
+  // tracking object (this one is private as unique to each node)
+  // try the private thing using the "bare" method
+  if (ros::param::has("~startup_delay")) {
+     ros::param::get("~startup_delay", startup_delay);
+  }
+
   ROS_INFO("Waiting for start-up delay of %d s", startup_delay);
   sleep(startup_delay);
-  ROS_INFO("Finished start-up delay of %d s", startup_delay);
 
   // Make a new client
   Client MyClient;
 
-  for(int i=0; i != 3; ++i) // repeat to check disconnecting doesn't wreck next connect
-  {
-    // Connect to a server
-    std::cout << "Connecting to " << HostName << " ..." << std::flush;
-    while( !MyClient.IsConnected().Connected )
+  // Connect to a server
+  ROS_INFO("Connecting to server %s", HostName.c_str());
+  while( !MyClient.IsConnected().Connected )
     {
       // Direct connection
 
@@ -226,11 +224,7 @@ int main( int argc, char* argv[] )
 
 
       std::cout << ".";
-  #ifdef WIN32
-      Sleep( 1000 );
-  #else
       sleep(1);
-  #endif
     }
     std::cout << std::endl;
 
@@ -239,16 +233,6 @@ int main( int argc, char* argv[] )
     MyClient.EnableMarkerData();
     MyClient.EnableUnlabeledMarkerData();
     MyClient.EnableDeviceData();
-    if( bReadCentroids )
-    {
-      MyClient.EnableCentroidData();
-    }
-
-    std::cout << "Segment Data Enabled: "          << Adapt( MyClient.IsSegmentDataEnabled().Enabled )         << std::endl;
-    std::cout << "Marker Data Enabled: "           << Adapt( MyClient.IsMarkerDataEnabled().Enabled )          << std::endl;
-    std::cout << "Unlabeled Marker Data Enabled: " << Adapt( MyClient.IsUnlabeledMarkerDataEnabled().Enabled ) << std::endl;
-    std::cout << "Device Data Enabled: "           << Adapt( MyClient.IsDeviceDataEnabled().Enabled )          << std::endl;
-    std::cout << "Centroid Data Enabled: "         << Adapt( MyClient.IsCentroidDataEnabled().Enabled )        << std::endl;
 
     // Set the streaming mode
     MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPull );
@@ -284,8 +268,18 @@ int main( int argc, char* argv[] )
 
     // wait for a key to be pressed
     std::cout << "Multicast has been started" << std::endl;
-    std::cout << "Press any key to stop" << std::endl;
-    int ch = getchar();
+    std::cout << "Press Ctrl+C to stop" << std::endl;
+    
+    while( ros::ok() )
+    {
+		
+      // get ROS stuff done first
+      ros::spinOnce();
+
+      // a pause
+      loop_rate.sleep();
+
+    }
 
     // shutting down again
     if( EnableMultiCast )
@@ -309,5 +303,4 @@ int main( int argc, char* argv[] )
     double secs = (double) (dt)/(double)CLOCKS_PER_SEC;
     std::cout << " Disconnect time = " << secs << " secs" << std::endl;
 
-  }
 }
