@@ -283,9 +283,9 @@ int main( int argc, char* argv[] )
     //std::cout << "Centroid Data Enabled: "         << Adapt( MyClient.IsCentroidDataEnabled().Enabled )        << std::endl;
 
     // Set the streaming mode
-    MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPull );
+    // MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPull );
     // MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ClientPullPreFetch );
-    // MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ServerPush );
+    MyClient.SetStreamMode( ViconDataStreamSDK::CPP::StreamMode::ServerPush );
 
     // Set the global up axis
     MyClient.SetAxisMapping( Direction::Forward, 
